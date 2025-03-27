@@ -15,7 +15,9 @@ import glob
 import random
 import os
 
-#Function to process our raw MET files dowloaded from Pupil cloud
+# Program for the automated labeling of video files, to be compared with manual labeling by hand-coding users
+
+# Function to process our raw MET files dowloaded from Pupil cloud
 def proc_met_files(subject):
     # Define folder path
     folder = os.path.join(
@@ -59,7 +61,7 @@ def proc_met_files(subject):
     if k == 0:
         print("No task markers present, check data download")
 
-    #Make sure gaze was corrected on Pupil cloud
+    # Make sure gaze was corrected on Pupil cloud
     if "gaze.corrected" not in events:
         print("WARNING: No gaze correction indicator in events, check data tracker")
 
@@ -77,7 +79,7 @@ def proc_met_files(subject):
 
     return gaze_filt
 
-#Define a function which puts a circle for each gaze point on the current frame
+# Define a function which puts a circle for each gaze point on the current frame
 def draw_gaze_points(frame, gazes, overlay_alpha=0.4):
     """Draw gaze points on a frame."""
     overlay = frame.copy()
@@ -87,13 +89,13 @@ def draw_gaze_points(frame, gazes, overlay_alpha=0.4):
         cv2.circle(overlay, coords, color=(0, 0, 255), radius=3, thickness=cv2.FILLED)
     return cv2.addWeighted(overlay, overlay_alpha, frame, 1 - overlay_alpha, 0)
 
-#Function to determine if the face or person is within the "tv screen" bounding box
+# Function to determine if the face or person is within the "tv screen" bounding box
 def is_inside_bbox(center, bbox):
     """Check if a point (center) is inside a bounding box."""
     x_min, y_min, x_max, y_max = map(int, bbox.xyxy.tolist()[0])
     return x_min < center[0] < x_max and y_min < center[1] < y_max
 
-#Function to remove faces and people within our TV bounding boxes from our list of people/faces
+# Function to remove faces and people within our TV bounding boxes from our list of people/faces
 def filter_entities(entities, tv_bboxes, track_ids_tvs, judges):
     """Filter entities (faces/people) not within TV bounding boxes."""
     keep_indices = []
@@ -105,7 +107,7 @@ def filter_entities(entities, tv_bboxes, track_ids_tvs, judges):
         inside_tv = False
         for bbox, track_id in zip(tv_bboxes, track_ids_tvs):
             if is_inside_bbox(entity_center, bbox):
-                judges.append(track_id) #If there is a face is within the TV add this track id to the judges list
+                judges.append(track_id) # If there is a face is within the TV add this track id to the judges list
                 inside_tv = True
                 break
         keep_indices.append(0 if inside_tv else 1)
@@ -118,7 +120,7 @@ def process_mask(mask, height, width):
     img_mask = cv2.fillPoly(img_black, points, (255, 255, 255))
     return np.all(img_mask == [255, 255, 255], axis=2)
 
-#Function which determines if the gaze point touches the current segmentation mask
+# Function which determines if the gaze point touches the current segmentation mask
 def check_gaze_intersection(frame_gazes, maskbool, height, width, face_mask=None):
     """Check gaze intersections with masks and optionally generate visuals."""
     gazein = np.full(len(frame_gazes), True)
@@ -139,31 +141,31 @@ def check_gaze_intersection(frame_gazes, maskbool, height, width, face_mask=None
 
     return gazein, gazeinface
 
-#Function which determines what to label the current gaze AOI based on gaze / mask intersections
+# Function which determines what to label the current gaze AOI based on gaze / mask intersections
 def label_data(gazein, gazeinface, track_id, label_opts, faceloop):
     """Determine the label and track_id based on gaze intersections."""
     if faceloop:
-        if gazeinface.all(): #If all of the gazes touch the face mask label as face
+        if gazeinface.all(): # If all of the gazes touch the face mask label as face
             label_opts[1] = track_id
         elif not gazeinface.all() and not (~gazeinface).all(): #If some in face mask and some outside label as uncodeable
             label_opts[99] = 0
-        elif gazein.all(): #If all gaze points touch the body label as body
+        elif gazein.all(): # If all gaze points touch the body label as body
             label_opts[0] = track_id
-        elif (~gazein).all(): #If all gaze points don't touch the body label as other
+        elif (~gazein).all(): # If all gaze points don't touch the body label as other
             label_opts[3] = 0
         else:
-            label_opts[99] = 0 #otherwise label as uncodeable
+            label_opts[99] = 0 # Otherwise, label as uncodeable
     else:
         if gazein.all():
-            label_opts[0] = track_id #If all gaze points touch the body label as body
+            label_opts[0] = track_id # If all gaze points touch the body label as body
         elif (~gazein).all():
-            label_opts[3] = 0 #If all gaze points don't touch the body label as other
+            label_opts[3] = 0 # If all gaze points don't touch the body label as other
         else:
-            label_opts[99] = 0 #otherwise label as uncodeable
+            label_opts[99] = 0 # Otherwise label as uncodeable
 
-#Determine label based on priority
-#For example if all gaze points touch the TV/Judge screen and body of the social partner
-#We label that frame as body of social partner rather than TV/Judge screen
+# Determine label based on priority
+# For example if all gaze points touch the TV/Judge screen and body of the social partner
+# We label that frame as body of social partner rather than TV/Judge screen
 def finalize_label(label_opts):
     """Determine the final label and track based on label options."""
     for priority in [1, 0, 62, 3]:
@@ -171,7 +173,7 @@ def finalize_label(label_opts):
             return priority, label_opts[priority]
     return 99, 0
 
-#Define the main function which calls above functions
+# Define the main function which calls above functions
 def pcat_pipe(subject, gazes, vidgen, new):
     # Define paths to data and model files
     pt_path = './yolov8m-seg.pt'
@@ -188,7 +190,7 @@ def pcat_pipe(subject, gazes, vidgen, new):
     out_hand = os.path.join(out_fold, subject + '_hand_out.avi')
     data_file = os.path.join(out_fold, subject + '_met_data.csv')
 
-    #save the temporarly file locally
+    # Save the temporarly file locally
     out_file = os.path.join(out_fold, subject + '_met_data_vidtemp.avi')
 
     # Load video
@@ -249,7 +251,7 @@ def pcat_pipe(subject, gazes, vidgen, new):
     st = time.time()
     print(f"Start time: {ct}")
 
-    #Loop through every frame in the video
+    # Loop through every frame in the video
     for i in range(total_frames):
         if i % 3000 == 0:
             ct = datetime.datetime.now()
@@ -262,21 +264,20 @@ def pcat_pipe(subject, gazes, vidgen, new):
         if not ret:
             break
 
-        #If the frame is within our task frames we process it
+        # If the frame is within our task frames we process it
         if frame_num in all_frames:
-            #print(frame_num)
-            #Get gaze coordinates for the associated frame
+            # Get gaze coordinates for the associated frame
             frame_gazes = gazes[gazes.frame == frame_num].iloc[:, 3:5].values
 
-            #If this is one of our validation frames indicate it in data file and make a separate image to save to video with only gaze overlay
+            # If this is one of our validation frames indicate it in data file and make a separate image to save to video with only gaze overlay
             if frame_num in val_frames:
                 outdata.loc[outdata['frame'] == frame_num, ['Validation']] = 1
                 hand_frame = frame.copy()
 
-            #If there is no gaze for the current frame label as uncodeable
+            # If there is no gaze for the current frame label as uncodeable
             if frame_gazes.size == 0:
                 lab, track = 99, 0
-            #Otherwise run the YOLO models on our frame
+            # Otherwise run the YOLO models on our frame
             else:
                 output = model.track(frame, verbose=False, persist=True)
                 bboxes = output[0].boxes
@@ -291,18 +292,18 @@ def pcat_pipe(subject, gazes, vidgen, new):
                     # Note 0=body, 1=face, 2=self, 3=other, 62=TV/judge, 99=uncodeable
                     # Refine arrays to just detected people and label as self vs body
 
-                    masks = output[0].masks #segmentation masks
-                    pred_cls = bboxes.cls.cpu().numpy() #predicted classes of the masks
-                    pred_conf = bboxes.conf.cpu().numpy() #predicted confidence of the object
-                    #filter to only include people and TVs of higher confidence
+                    masks = output[0].masks # Segmentation masks
+                    pred_cls = bboxes.cls.cpu().numpy() # Predicted classes of the masks
+                    pred_conf = bboxes.conf.cpu().numpy() # Predicted confidence of the object
+                    # Filter to only include people and TVs of higher confidence
                     masks = masks[((pred_cls == 0) | (pred_cls == 62)) & (pred_conf > 0.35)]
                     bboxes = bboxes[((pred_cls == 0) | (pred_cls == 62)) & (pred_conf > 0.35)]
                     pred_cls= pred_cls[((pred_cls == 0) | (pred_cls == 62)) & (pred_conf > 0.35)]
 
-                    #If there is a track id (tracks same object across frames) save it
+                    # If there is a track id (tracks same object across frames) save it
                     # If not then create placeholders (usually when blurry image)
                     if bboxes.id is None:
-                        #if the model didn't make track ids pick some random ones
+                        # If the model didn't make track ids pick some random ones
                         track_ids = [i for i in range(non_tracker - len(masks),non_tracker)]
                         non_tracker = non_tracker - len(masks)
                         track_ids = np.array(track_ids)
@@ -354,11 +355,11 @@ def pcat_pipe(subject, gazes, vidgen, new):
                         people_ids.extend(track_ids_peeps)
                         people_ids = list(set(people_ids))
 
-                        #If there are faces present in the frame create a mask for them based on upper part of body mask
+                        # If there are faces present in the frame, create a mask for them based on upper part of body mask
                         if len(bboxes_face) > 0:
 
                             face = True
-                            max_face = conf_face.argmax() #get bounding box of highest confidence face (there can only be one person in room)
+                            max_face = conf_face.argmax() # Get bounding box of highest confidence face (there can only be one person in room)
                             box_face = bboxes_face[max_face]
 
                             y_face = int(box_face.xyxy.tolist()[0][3])
@@ -370,7 +371,7 @@ def pcat_pipe(subject, gazes, vidgen, new):
 
                         label_opts = {}
 
-                        #Loop through people identified in the frame
+                        # Loop through people identified in the frame
                         for mask, bbox, track_id in zip(masks_peeps, bboxes_peeps, track_ids_peeps):
                             maskbool = process_mask(mask, height, width)
                             faceloop = face and maskbool[y_face-1, x_face] #If the face exists within this body
@@ -407,7 +408,7 @@ def pcat_pipe(subject, gazes, vidgen, new):
                                     label_opts[3] = 0
                                 else:
                                     label_opts[99] = 0
-                            except Exception as e: #This error occured for about 5 frames in our entire sample
+                            except Exception as e: # This error occured for about 5 frames in our entire sample
                                 print(e)
                                 print("Error in calculating object overlay and gaze intersection for frame " + str(frame_num))
                                 label_opts[99] = 0
@@ -418,11 +419,11 @@ def pcat_pipe(subject, gazes, vidgen, new):
                 else:
                     lab = 99
                     track = 0
-            #Save output label and track id to the dataframe
+            # Save output label and track id to the dataframe
             outdata.loc[outdata['frame'] == frame_num, ['Code']] = lab
             outdata.loc[outdata['frame'] == frame_num, ['Track_ID']] = track
 
-            #Add gaze points and frame number to frame image and add to output video
+            # Add gaze points and frame number to frame image and add to output video
             if vidgen:
                 frame = draw_gaze_points(frame, frame_gazes, overlay_alpha=0.8)
                 cv2.putText(frame, str(frame_num), (985, 30), 0, 1, [0, 0, 0], thickness=3)
@@ -432,39 +433,39 @@ def pcat_pipe(subject, gazes, vidgen, new):
                     cv2.putText(hand_frame, str(frame_num), (985, 30), 0, 1, [0, 0, 0], thickness=3)
                     outhand.write(hand_frame)
 
-    #Check to see which people ids were never identified as having a face and save those as self (code 2)
+    # Check to see which people ids were never identified as having a face and save those as self (code 2)
     partner_ids = list(set(partner_ids))
     self_ids = list(set(people_ids) - set(partner_ids))
     print("self ids:")
     print(self_ids)
     print("partner ids:")
     print(partner_ids)
-    #overwrite ids without a face as the self
+    # Overwrite ids without a face as the self
     outdata.loc[(outdata.Track_ID.isin(self_ids)) & (outdata["Code"] == 0),'Code'] = 2
-    #overwrite ids with judge as judge
+    # Overwrite ids with judge as judge
     outdata.loc[(outdata.Track_ID.isin(judges)) & (outdata["Code"] == 62),'Code'] = 4
 
-    #overwrite all tvs as judge for newer files in which there is only one monitor in the room
+    # Overwrite all tvs as judge for newer files in which there is only one monitor in the room
     if new:
         outdata.loc[(outdata["Code"] == 62),'Code'] = 4
     else:
-        #tidy up judge codes based on task (cannot see other tv when not giving speech), still may need some manual checking of 62 codes to label as 3 or 4
+        # Tidy up judge codes based on task (cannot see other tv when not giving speech), still may need some manual checking of 62 codes to label as 3 or 4
         if "C" in subject:
             outdata.loc[(outdata["task"].str.startswith('p')) & (outdata["Code"] == 62), 'Code'] = 4
         elif "P" in subject:
             outdata.loc[(outdata["task"].str.startswith('c')) & (outdata["Code"] == 62), 'Code'] = 4
 
-    #save output data
+    # Save output data
     outdata.to_csv(data_file, index=False)
-    #return time spent processing
+    # Return time spent processing
     et = time.time()
     elapsed_min = (et - st) / 60
     print('Execution time: ', elapsed_min, ' minutes')
-    #Add labels to our output video so we can get a visual of how well the model is doing
+    # Add labels to our output video so we can get a visual of how well the model is doing
     if vidgen:
         out.release()
         outhand.release()
-        #Add label to video
+        # Add label to video
         # Load Video
         cap2 = cv2.VideoCapture(out_file)
         height = int(cap2.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -478,4 +479,4 @@ def pcat_pipe(subject, gazes, vidgen, new):
             cv2.putText(frame, str(outdata.iloc[i,2]), (30, 30), 0, 1, [0, 0, 0], thickness=3)
             out2.write(frame)
         out2.release()
-        #os.remove(out_file)
+        
