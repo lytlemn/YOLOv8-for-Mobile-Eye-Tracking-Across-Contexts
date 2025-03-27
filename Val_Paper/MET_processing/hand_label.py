@@ -10,6 +10,8 @@ import pandas as pd
 import os
 import time
 
+# Program to allow the user (hand coder) to manually label each video file, to be compared with the automatic labeling program in the bffs_v8 file.
+
 # Retrieves information from user/manual coder
 parser = argparse.ArgumentParser()
 # -sub SUBJECT -vid VIDEO (Maybe omit this line for clarity, unless it is necessary for potential future changes?)
