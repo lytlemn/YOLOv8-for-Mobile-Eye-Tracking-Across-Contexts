@@ -12,7 +12,7 @@ subject = args.subject
 vidgen = args.video
 
 def main():
-    subjects = ["","",""] #subject numbers to process many at once
+    subjects = ["","",""] # Add numbers of subjects we want to process here
     for subject in subjects:
         warnings.simplefilter("ignore")
         print("running subject " + subject)
