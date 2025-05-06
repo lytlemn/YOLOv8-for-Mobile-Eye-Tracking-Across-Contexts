@@ -1,0 +1,61 @@
+id,dyad,subject,timepoint,RA_initials,hand_proc_time,reliability,reliability_initials,reliability_proc_time,site,female_self,race_self_code,ethnicity_self_code,female_partner,race_partner_code,ethnicity_partner_code,parent_sex,child_sex,child_race,child_ethnicity,parent_race,parent_ethnicity,child_age,parent_age,room
+11004_C,11004,C,T3,JJ,12,0,,,WashU,0,3,1,1,3,0,Female,Male,White,Hispanic/Latine,White,Neither,7.33850365,37.11,WashU-2
+11004_P,11004,P,T3,JJ,12,0,,,WashU,1,3,0,0,3,1,Female,Male,White,Hispanic/Latine,White,Neither,7.33850365,37.11,WashU-2
+11012_C,11012,C,T3,JJ,10,0,,,WashU,1,2,0,0,2,0,Male,Female,Black/African American,Neither,Black/African American,Neither,5.83652718,29.61,WashU-2
+11012_P,11012,P,T3,JJ,14,0,,,WashU,0,2,0,1,2,0,Male,Female,Black/African American,Neither,Black/African American,Neither,5.83652718,29.61,WashU-2
+11026_C,11026,C,T3,JJ,12,0,,,WashU,0,4,0,0,2,0,Male,Male,Multiracial,Neither,Black/African American,Neither,6.050058662,34.22,WashU-2
+11026_P,11026,P,T3,JJ,13,0,,,WashU,0,2,0,0,4,0,Male,Male,Multiracial,Neither,Black/African American,Neither,6.050058662,34.22,WashU-2
+11032_C,11032,C,T1,OM,25,0,,,WashU,0,3,0,0,3,0,Male,Male,White,Neither,White,Neither,4.520810515,41.28,WashU-1
+11032_P,11032,P,T1,OM,25,0,,,WashU,0,3,0,0,3,0,Male,Male,White,Neither,White,Neither,4.520810515,41.28,WashU-1
+11036_C,11036,C,T3,JJ,10,1,OM,10,WashU,0,4,0,1,3,0,Female,Male,Multiracial,Neither,White,Neither,7.244353183,40.85,WashU-2
+11036_P,11036,P,T3,JJ,11,0,,,WashU,1,3,0,0,4,0,Female,Male,Multiracial,Neither,White,Neither,7.244353183,40.85,WashU-2
+11038_C,11038,C,T1,OM,23,0,,,WashU,1,3,1,0,3,0,Male,Female,White,Hispanic/Latine,White,Neither,4.077217963,37.74,WashU-1
+11038_P,11038,P,T1,OM,23,1,ML,13.2,WashU,0,3,0,1,3,1,Male,Female,White,Hispanic/Latine,White,Neither,4.077217963,37.74,WashU-1
+11039_C,11039,C,T1,OM,25,0,,,WashU,0,3,0,1,3,0,Female,Male,White,Neither,White,Neither,4.186746988,36.04,WashU-1
+11039_P,11039,P,T1,OM,25,0,,,WashU,1,3,0,0,3,0,Female,Male,White,Neither,White,Neither,4.186746988,36.04,WashU-1
+11049_C,11049,C,T3,JJ,11,0,,,WashU,0,4,0,0,2,0,Male,Male,Multiracial,Neither,Black/African American,Neither,5.27189781,29.94,WashU-2
+11049_P,11049,P,T3,JJ,11,0,,,WashU,0,2,0,0,4,0,Male,Male,Multiracial,Neither,Black/African American,Neither,5.27189781,29.94,WashU-2
+11057_C,11057,C,T1,OM,20,0,,,WashU,1,2,0,1,2,0,Female,Female,Black/African American,Neither,Black/African American,Neither,4.326396495,26.57,WashU-2
+11057_P,11057,P,T1,OM,25,0,,,WashU,1,2,0,1,2,0,Female,Female,Black/African American,Neither,Black/African American,Neither,4.326396495,26.57,WashU-2
+11059_C,11059,C,T1,OM,25,0,,,WashU,0,2,0,1,2,0,Female,Male,Black/African American,Neither,Black/African American,Neither,6.192097027,54.07,WashU-2
+11059_P,11059,P,T1,ML,23,1,OM,30,WashU,1,2,0,0,2,0,Female,Male,Black/African American,Neither,Black/African American,Neither,6.192097027,54.07,WashU-2
+11060_C,11060,C,T1,OM,20,1,JJ,11,WashU,1,3,0,1,3,0,Female,Female,White,Neither,White,Neither,5.992175274,43.98,WashU-2
+11060_P,11060,P,T1,OM,20,0,,,WashU,1,3,0,1,3,0,Female,Female,White,Neither,White,Neither,5.992175274,43.98,WashU-2
+11069_C,11069,C,T1,OM,20,1,JJ,14,WashU,0,2,0,1,2,0,Female,Male,Black/African American,Neither,Black/African American,Neither,6.184200235,31.68,WashU-2
+11069_P,11069,P,T1,OM,20,0,,,WashU,1,2,0,0,2,0,Female,Male,Black/African American,Neither,Black/African American,Neither,6.184200235,31.68,WashU-2
+11087_C,11087,C,T1,ML,21.7,0,,,WashU,1,2,0,1,2,0,Female,Female,Black/African American,Neither,Black/African American,Neither,6.405944466,28.7,WashU-2
+11087_P,11087,P,T1,ML,14.3,1,JJ,9,WashU,1,2,0,1,2,0,Female,Female,Black/African American,Neither,Black/African American,Neither,6.405944466,28.7,WashU-2
+11091_C,11091,C,T1,ML,17.2,0,,,WashU,1,1,0,1,1,0,Female,Female,Asian,Neither,Asian,Neither,4.981751825,34.51,WashU-2
+11091_P,11091,P,T1,ML,13.8,0,,,WashU,1,1,0,1,1,0,Female,Female,Asian,Neither,Asian,Neither,4.981751825,34.51,WashU-2
+11092_C,11092,C,T1,ML,15.8,0,,,WashU,0,2,0,1,2,0,Female,Male,Black/African American,Neither,Black/African American,Neither,4.116037219,34.42,WashU-2
+11092_P,11092,P,T1,ML,19,0,,,WashU,1,2,0,0,2,0,Female,Male,Black/African American,Neither,Black/African American,Neither,4.116037219,34.42,WashU-2
+12007_C,12007,C,T3,JJ,13,0,,,PSU,1,3,0,1,3,0,Female,Female,White,Neither,White,Neither,7.327554745,49.59,PSU-2
+12007_P,12007,P,T3,JJ,12,0,,,PSU,1,3,0,1,3,0,Female,Female,White,Neither,White,Neither,7.327554745,49.59,PSU-2
+12011_C,12011,C,T3,JJ,10,0,,,PSU,0,3,0,1,3,0,Female,Male,White,Neither,White,Neither,6.611909651,48.86,PSU-2
+12011_P,12011,P,T3,JJ,13,1,OM,20,PSU,1,3,0,0,3,0,Female,Male,White,Neither,White,Neither,6.611909651,48.86,PSU-2
+12016_C,12016,C,T3,JJ,12,1,ML,15.9,PSU,0,3,1,0,3,1,Male,Male,White,Hispanic/Latine,White,Hispanic or Latine,5.883066093,38.09,PSU-2
+12016_P,12016,P,T3,JJ,19,0,,,PSU,0,3,1,0,3,1,Male,Male,White,Hispanic/Latine,White,Hispanic or Latine,5.883066093,38.09,PSU-2
+12017_C,12017,C,T3,JJ,10,0,,,PSU,0,3,0,1,3,0,Female,Male,White,Neither,White,Neither,7.691605839,37.42,PSU-2
+12017_P,12017,P,T3,JJ,12,0,,,PSU,1,3,0,0,3,0,Female,Male,White,Neither,White,Neither,7.691605839,37.42,PSU-2
+12029_C,12029,C,T3,JJ,10,0,,,PSU,1,4,0,1,4,0,Female,Female,Multiracial,Neither,Multiracial,Neither,8.181569343,40.32,PSU-2
+12029_P,12029,P,T3,JJ,12,0,,,PSU,1,4,0,1,4,0,Female,Female,Multiracial,Neither,Multiracial,Neither,8.181569343,40.32,PSU-2
+12035_C,12035,C,T1,ML,13,1,OM,20,PSU,1,2,0,1,2,0,Female,Female,Black/African American,Neither,Black/African American,Neither,5.98943662,35.86,PSU-1
+12035_P,12035,P,T1,ML,13,0,,,PSU,1,2,0,1,2,0,Female,Female,Black/African American,Neither,Black/African American,Neither,5.98943662,35.86,PSU-1
+12036_C,12036,C,T3,JJ,20,0,,,PSU,1,3,0,0,3,0,Male,Female,White,Neither,White,Neither,7.315537303,37.85,PSU-2
+12036_P,12036,P,T3,JJ,16,0,,,PSU,0,3,0,1,3,0,Male,Female,White,Neither,White,Neither,7.315537303,37.85,PSU-2
+12042_C,12042,C,T3,JJ,16,0,,,PSU,1,3,0,1,3,0,Female,Female,White,Neither,White,Neither,5.546343371,37.63,PSU-2
+12042_P,12042,P,T3,JJ,18,0,,,PSU,1,3,0,1,3,0,Female,Female,White,Neither,White,Neither,5.546343371,37.63,PSU-2
+12044_C,12044,C,T1,ML,11.7,0,,,PSU,0,2,0,1,2,0,Female,Male,Black/African American,Neither,Black/African American,Neither,4.426094891,39.34,PSU-2
+12044_P,12044,P,T1,JJ,13,0,,,PSU,1,2,0,0,2,0,Female,Male,Black/African American,Neither,Black/African American,Neither,4.426094891,39.34,PSU-2
+12053_C,12053,C,T1,ML,9.6,0,,,PSU,1,4,2,1,3,2,Female,Female,Multiracial,Middle Eastern/North African,White,Middle Eastern/North African,4.645072993,39.67,PSU-2
+12053_P,12053,P,T1,ML,10.6,1,OM,13,PSU,1,3,2,1,4,2,Female,Female,Multiracial,Middle Eastern/North African,White,Middle Eastern/North African,4.645072993,39.67,PSU-2
+12055_C,12055,C,T1,JJ,9,0,,,PSU,1,1,0,0,1,0,Male,Female,Asian,Neither,Asian,Neither,4.668674699,31.76,PSU-1
+12055_P,12055,P,T1,JJ,10,0,,,PSU,0,1,0,1,1,0,Male,Female,Asian,Neither,Asian,Neither,4.668674699,31.76,PSU-1
+12056_C,12056,C,T3,JJ,14,1,ML,12.4,PSU,1,3,0,0,3,0,Male,Female,White,Neither,White,Neither,5.189781022,42.43,PSU-2
+12056_P,12056,P,T3,JJ,50,0,,,PSU,0,3,0,1,3,0,Male,Female,White,Neither,White,Neither,5.189781022,42.43,PSU-2
+12058_C,12058,C,T1,JJ,11,0,,,PSU,0,3,0,0,3,0,Male,Male,White,Neither,White,Neither,4.277108434,35.66,PSU-1
+12058_P,12058,P,T1,JJ,15,0,,,PSU,0,3,0,0,3,0,Male,Male,White,Neither,White,Neither,4.277108434,35.66,PSU-1
+12076_C,12076,C,T1,OM,15,0,,,PSU,0,3,2,1,3,2,Female,Male,White,Middle Eastern/North African,White,Middle Eastern/North African,6.951403149,48.09,PSU-2
+12076_P,12076,P,T1,OM,20,1,ML,12.9,PSU,1,3,2,0,3,2,Female,Male,White,Middle Eastern/North African,White,Middle Eastern/North African,6.951403149,48.09,PSU-2
+12094_C,12094,C,T1,ML,12.4,0,,,PSU,0,2,0,1,2,0,Female,Male,Black/African American,Neither,Black/African American,Neither,6.384043801,41.13,PSU-2
+12094_P,12094,P,T1,ML,13.5,1,JJ,11,PSU,1,2,0,0,2,0,Female,Male,Black/African American,Neither,Black/African American,Neither,6.384043801,41.13,PSU-2

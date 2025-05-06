@@ -1,0 +1,148 @@
+---
+title: "Sample Descriptives"
+author: "Dr. Joscelin Rocha-Hidalgo"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries
+```{r}
+#Installing pacman and loading packages
+if (!("pacman" %in% installed.packages()[,])) {
+    install.packages("pacman")
+}
+pacman::p_load(tidyverse, gt)
+```
+
+## Load datasets
+```{r}
+pcat_demo <- read_csv("../data/pcat_demo.csv")
+bffs_demo <- read_csv("../data/bffs_demo.csv")
+```
+## Clean BFF
+```{r}
+bffs_demo_clean <- bffs_demo %>%
+  select(id,age,gender_dyad,race_self,ethnicity_self) %>%
+  rename(Age = age,
+         Gender = gender_dyad,
+         Race = race_self,
+         Ethnicity = ethnicity_self) %>%
+  mutate(Gender = case_when(
+    Gender == "Man" ~ "Male",
+    Gender == "Woman" ~ "Female"
+  ),
+  Race = case_when(
+  Race == "Black" ~ "Black/African American",
+  TRUE ~ Race
+  ),
+  Ethnicity = case_when(
+    str_detect(Ethnicity, "Latino") ~ "Hispanic/Latino/Latina/Latinx/Latine",
+    str_detect(Ethnicity, "other") ~ "Other",
+    TRUE ~ "None"
+  ),
+  Study = "Study 1",
+  Participant = "Adults") 
+```
+
+## Clean PCAT
+```{r}
+pcat_demo_clean <- pcat_demo %>%
+  mutate(Age = case_when(
+    subject == "C" ~ child_age,
+    subject == "P" ~ parent_age,
+  ),
+  Gender = case_when(
+    subject == "C" ~ child_sex,
+    subject == "P" ~ parent_sex,
+  ),
+  Race = case_when(
+    subject == "C" ~ child_race,
+    subject == "P" ~ parent_race,
+  ),
+  Ethnicity = case_when(
+  subject == "C" ~ child_ethnicity,
+  subject == "P" ~ parent_ethnicity,
+  ),
+  Study = "Study 2",
+  Participant = case_when(
+  subject == "C" ~ "Children",
+  subject == "P" ~ "Adults", 
+  )) %>%
+  mutate(Ethnicity = case_when(
+    str_detect(Ethnicity, "Latine") ~ "Hispanic/Latino/Latina/Latinx/Latine",
+    Ethnicity == "Middle Eastern/North African" ~ "Middle Eastern/North African",
+    TRUE ~ "None"
+  )) %>%
+  select(id, Gender, Race, Ethnicity,Study,Participant, Age)
+```
+
+## Make tables
+```{r}
+desired_order <- c("Age","Gender", "Race", "Ethnicity")
+cols_order <- c("Study 1", "Study 2")
+
+demo_table_count <- bffs_demo_clean %>%
+  full_join(pcat_demo_clean) %>%
+  mutate(Study = factor(Study, levels = cols_order)) %>%
+  select(-c(Participant,id,Age)) %>%
+  pivot_longer(-Study, names_to = "variables", values_to = "responses") %>%
+  group_by(Study, variables, responses) %>%
+  summarise(n = n()) %>%
+  group_by(Study, variables) %>%
+  mutate(percentage = n / sum(n) * 100) %>%
+  ungroup() %>%
+  mutate(n = sprintf("%d (%.2f%%)", n, percentage)) %>%
+  select(-percentage) %>%
+  pivot_wider(names_from = Study, values_from = n) %>%
+  mutate(
+    variables = factor(variables, levels = desired_order)) %>%
+  arrange(variables, responses) %>%
+  mutate(responses = case_when(
+    is.na(responses) ~ "Did not Disclose or Missing",
+    TRUE ~ responses
+  ))
+
+demo_table_age <-bffs_demo_clean %>%
+  full_join(pcat_demo_clean) %>%
+  mutate(Study = factor(Study, levels = cols_order)) %>%
+  select(c(Study,Participant,Age)) %>%
+  group_by(Study, Participant) %>%
+  summarise(mean = mean(Age),
+            sd = sd(Age),
+            min = min(Age),
+            max = max(Age)) %>%
+  ungroup() %>%
+  mutate( new = sprintf("M = %.2f; SD = %.2f (%.2f - %.2f)", mean, sd, min, max),
+          variables = "Age") %>%
+  select(variables, Study,Participant,new) %>%
+  pivot_wider(names_from = "Study", values_from = "new") %>%
+  rename(responses = Participant)
+
+```
+```{r}
+demo_table_age %>%
+full_join(demo_table_count) %>%
+  select(-variables) %>%
+  gt() %>%
+  tab_row_group(
+    label = "Ethnicity",
+    rows = 9:12
+  ) %>%
+  tab_row_group(
+    label = "Race",
+    rows = 5:8
+  ) %>%
+  tab_row_group(
+    label = "Gender",
+    rows = 3:4
+  ) %>%
+  tab_row_group(
+    label = "Age",
+    rows = 1:2
+  )
+```
+

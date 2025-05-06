@@ -1,0 +1,146 @@
+---
+title: "bffs_compile_data"
+author: "Marisa Lytle"
+date: "2025-02-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+#Setting the root directory
+knitr::opts_knit$set(root.dir = 'C:/Users/maris/OneDrive - The Pennsylvania State University/Research Projects/CV_MET/AP Special Issue')
+```
+
+```{r}
+#Installing pacman and loading packages
+if (!("pacman" %in% installed.packages()[,])) {
+    install.packages("pacman")
+}
+pacman::p_load(readxl,tidyverse,fs)
+```
+
+```{r}
+input_files <- dir_ls("./data/bffs", regexp = "\\.csv$")
+input_data <- input_files |>
+  map_dfr(read_csv, .id = "id") |>
+  mutate(id = str_sub(id, start = 13, end = 22)) |>
+  separate(id, c("study", "dyad", "subject"),remove=FALSE) |>
+  group_by(id) |>
+  mutate(time = rep(seq(length(id)/24), 
+                     length.out = length(id), each = 25)) |>
+  select(-c(Face, Track_ID))
+
+aoi <- input_data |>
+  group_by(id, time, Code) |>
+  summarise(aoiN = n()) |>
+  ungroup() |>
+  group_by(id, time) |>
+  filter(aoiN == max(aoiN)) |>
+  select(-aoiN) |>
+  ungroup()
+
+# Check for duplicates
+aoi |>
+  group_by(id, time) |>
+  filter(duplicated(time))
+
+# Remove duplicates
+aoi2 <- aoi |>
+  group_by(id, time) |>
+  slice_head() |>
+  ungroup()  |>
+  rename(Code_sec = Code)
+
+aoi_h <- input_data |>
+  group_by(id, time, hand_code) |>
+  summarise(aoiN = n()) |>
+  ungroup() |>
+  group_by(id, time) |>
+  filter(aoiN == max(aoiN)) |>
+  select(-aoiN) |>
+  ungroup()
+
+# Check for duplicates
+aoi_h |>
+  group_by(id, time) |>
+  filter(duplicated(time))
+
+# Remove duplicates
+aoi2_h <- aoi_h |>
+  group_by(id, time) |>
+  slice_head() |>
+  ungroup() |>
+  rename(hand_code_sec = hand_code)
+
+data <- left_join(input_data,aoi2) |>
+  left_join(aoi2_h)
+```
+
+#Add reliability
+```{r}
+input_files <- dir_ls("./data/bffs/reliability", regexp = "\\.csv$")
+input_data <- input_files |>
+  map_dfr(read_csv, .id = "id") |>
+  mutate(id = str_sub(id, start = 25, end = 34)) |>
+  separate(id, c("study", "dyad", "subject"),remove=FALSE) |>
+  group_by(id) |>
+  mutate(time = rep(seq(length(id)/24), 
+                     length.out = length(id), each = 25)) |>
+  select(-c(Face, Track_ID))
+
+aoi <- input_data |>
+  group_by(id, time, Code) |>
+  summarise(aoiN = n()) |>
+  ungroup() |>
+  group_by(id, time) |>
+  filter(aoiN == max(aoiN)) |>
+  select(-aoiN) |>
+  ungroup()
+
+# Check for duplicates
+aoi |>
+  group_by(id, time) |>
+  filter(duplicated(time))
+
+# Remove duplicates
+aoi2 <- aoi |>
+  group_by(id, time) |>
+  slice_head() |>
+  ungroup()  |>
+  rename(Code_sec = Code)
+
+aoi_h <- input_data |>
+  group_by(id, time, hand_code) |>
+  summarise(aoiN = n()) |>
+  ungroup() |>
+  group_by(id, time) |>
+  filter(aoiN == max(aoiN)) |>
+  select(-aoiN) |>
+  ungroup()
+
+# Check for duplicates
+aoi_h |>
+  group_by(id, time) |>
+  filter(duplicated(time))
+
+# Remove duplicates
+aoi2_h <- aoi_h |>
+  group_by(id, time) |>
+  slice_head() |>
+  ungroup() |>
+  rename(hand_code_sec = hand_code)
+
+data_rel <- left_join(input_data,aoi2) |>
+  left_join(aoi2_h) |>
+  rename(hand_code_rel = hand_code,
+         hand_code_sec_rel = hand_code_sec)
+```
+
+```{r}
+data <- full_join(data,data_rel)
+
+write.csv(data,"./data/bffs_validation_data.csv", row.names = FALSE)
+```
+

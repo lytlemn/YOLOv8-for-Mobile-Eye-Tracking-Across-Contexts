@@ -1,0 +1,116 @@
+---
+title: "Untitled"
+author: "Marisa Lytle"
+date: "2025-03-20"
+output: html_document
+---
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+#Setting the root directory
+knitr::opts_knit$set(root.dir = 'C:/Users/maris/OneDrive - The Pennsylvania State University/Research Projects/CV_MET/AP Special Issue')
+```
+
+```{r}
+#Installing pacman and loading packages
+if (!("pacman" %in% installed.packages()[,])) {
+    install.packages("pacman")
+}
+pacman::p_load(readxl,tidyverse,fs)
+```
+
+```{r}
+input_files <- dir_ls("./data/pcat/recode", regexp = "\\.csv$")
+input_data <- input_files |>
+  map_dfr(read_csv, .id = "id") |>
+  mutate(retest = str_sub(id, start = 46, end = 46),
+    id = str_sub(id, start = 20, end = 26)) |>
+  separate(id, c("dyad", "subject"),remove=FALSE) |>
+  group_by(id,task,retest) |>
+  mutate(time = rep(seq(length(id)/29), 
+                     length.out = length(id), each = 30)) |>
+  select(-c(Track_ID,Validation))
+
+input_data <- filter(input_data, retest==3)
+
+
+aoi <- input_data |>
+  group_by(id,task, time, Code) |>
+  summarise(aoiN = n()) |>
+  ungroup() |>
+  group_by(id,task, time) |>
+  filter(aoiN == max(aoiN)) |>
+  select(-aoiN) |>
+  ungroup()
+
+# Check for duplicates
+aoi |>
+  group_by(id,task, time) |>
+  filter(duplicated(time))
+
+# Remove duplicates
+aoi2 <- aoi |>
+  group_by(id,task, time) |>
+  slice_head() |>
+  ungroup()  |>
+  rename(Code_sec = Code)
+
+aoi_h <- input_data |>
+  group_by(id,task, time, hand_code) |>
+  summarise(aoiN = n()) |>
+  ungroup() |>
+  group_by(id,task, time) |>
+  filter(aoiN == max(aoiN)) |>
+  select(-aoiN) |>
+  ungroup()
+
+# Check for duplicates
+aoi_h |>
+  group_by(id,task, time) |>
+  filter(duplicated(time))
+
+# Remove duplicates
+aoi2_h <- aoi_h |>
+  group_by(id,task, time) |>
+  slice_head() |>
+  ungroup() |>
+  rename(hand_code_sec = hand_code)
+
+data_3 <- left_join(input_data,aoi2) |>
+  left_join(aoi2_h)
+```
+
+```{r}
+data_1 <- data_1 %>% 
+  ungroup() %>% 
+  rename(hand_code_1 = hand_code,
+         hand_code_sec_1 = hand_code_sec) %>% 
+  select(-retest)
+
+data_2 <- data_2 %>% 
+  ungroup() %>%  
+    rename(hand_code_2 = hand_code,
+         hand_code_sec_2 = hand_code_sec) %>% 
+  select(-retest)
+
+data_2 <- data_2 %>% 
+  mutate(Code = ifelse(Code==62,4,Code))
+
+data_3 <- data_3 %>% 
+  mutate(Code = ifelse(Code==62,4,Code))
+
+data_3 <- data_3 %>% 
+  ungroup() %>%  
+    rename(hand_code_3 = hand_code,
+         hand_code_sec_3 = hand_code_sec) %>% 
+  select(-retest)
+
+
+data_w <- full_join(data_1,data_2) %>% 
+  full_join(data_3)
+
+write.csv(data_w,"./data/pcat_retest.csv", row.names = FALSE)
+
+```
+

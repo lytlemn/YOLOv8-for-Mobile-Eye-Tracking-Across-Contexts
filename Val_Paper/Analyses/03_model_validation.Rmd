@@ -1,0 +1,783 @@
+---
+title: "analyses"
+author: "Dr. Joscelin Rocha-Hidalgo"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE)
+```
+
+# Setup
+
+## Install and load packages
+
+```{r}
+# Installing pacman and loading packages
+if (!("pacman" %in% installed.packages()[, ])) {
+  install.packages("pacman")
+}
+pacman::p_load(tidyverse, caret, reshape2, gt, imager, cowplot, webshot)
+```
+
+## Function
+
+```{r}
+conf_matrix <- function(df.true, df.pred, title = "", true.lab = "True Class", pred.lab = "Predicted Class", type,
+                        high.col = "#1E407C", low.col = "white") {
+  # convert input vector to factors, and ensure they have the same levels
+  df.true <- as.factor(df.true)
+  df.pred <- factor(df.pred, levels = levels(df.true))
+
+  # generate confusion matrix, and confusion matrix as a pecentage of each true class (to be used for color)
+  df.cm <- table(True = df.true, Pred = df.pred)
+  df.cm.col <- df.cm / rowSums(df.cm)
+
+  # convert confusion matrices to tables, and binding them together
+  df.table <- reshape2::melt(df.cm)
+  df.table.col <- reshape2::melt(df.cm.col)
+  df.table <- left_join(df.table, df.table.col, by = c("True", "Pred"))
+
+
+  # calculate accuracy and class accuracy
+  acc.vector <- c(diag(df.cm)) / c(rowSums(df.cm))
+  class.acc <- data.frame(Pred = "Class Acc.", True = names(acc.vector), value = acc.vector)
+  acc <- sum(diag(df.cm)) / sum(df.cm)
+
+  # Determine text color based on accuracy threshold (white if >50%, black otherwise)
+  df.table$text_color <- ifelse(df.table$value.y > 0.4, "white", "black")
+
+  # plot
+  ggplot() +
+    geom_tile(aes(x = Pred, y = True, fill = value.y),
+      data = df.table, size = 0.2, color = grey(0.5)
+    ) +
+    geom_tile(aes(x = Pred, y = True),
+      data = df.table[df.table$True == df.table$Pred, ],
+      size = 1, color = "black", fill = "transparent"
+    ) +
+    scale_x_discrete(position = "top", limits = c(levels(df.table$Pred), "Class Acc.")) +
+    scale_y_discrete(limits = rev(unique(levels(df.table$Pred)))) +
+    # labs(x = pred.lab, y = true.lab, fill = NULL,
+    #      title = paste0(title, "\nAccuracy ", round(100 * acc, 1), "%")) +
+    geom_text(aes(x = Pred, y = True, label = value.x, color = text_color),
+      data = df.table, size = 8
+    ) +
+    geom_text(data = class.acc, aes(Pred, True, label = paste0(round(100 * value), "%")), color = "black", size = 6) +
+    scale_fill_gradient(
+      low = low.col, high = high.col, labels = scales::percent,
+      limits = c(0, 1), breaks = c(0, 0.5, 1)
+    ) +
+    scale_color_identity() + # Ensures specified colors are used without mapping to a legend
+    guides(size = F) +
+    theme_bw() +
+    theme(
+      panel.border = element_blank(), legend.position = "right",
+      axis.text = element_text(color = "black", size = 16, family = "Arial"), axis.ticks = element_blank(),
+      panel.grid = element_blank(), axis.text.x.top = element_text(angle = 30, vjust = 0, hjust = 0),
+      axis.title = element_text(size = 16, family = "Arial"), # Increase size of axis titles
+      legend.title = element_text(size = 14, family = "Arial"), # Increase size of legend title
+      legend.text = element_text(size = 14, family = "Arial"),
+      legend.justification = "top"
+    ) +
+    coord_fixed() +
+    labs(y = paste("Human Label\n(per",type,")"), x = paste("YOLOv8 Predictions\n(per",type,")"), fill = "Class \nPerc. ")
+}
+```
+
+## Function for Poster
+```{r}
+conf_matrix_poster <- function(df.true, df.pred, title = "", true.lab = "True Class", pred.lab = "Predicted Class",
+                        high.col = "#1E407C", low.col = "white") {
+  # convert input vector to factors, and ensure they have the same levels
+  df.true <- as.factor(df.true)
+  df.pred <- factor(df.pred, levels = levels(df.true))
+
+  # generate confusion matrix, and confusion matrix as a pecentage of each true class (to be used for color)
+  df.cm <- table(True = df.true, Pred = df.pred)
+  df.cm.col <- df.cm / rowSums(df.cm)
+
+  # convert confusion matrices to tables, and binding them together
+  df.table <- reshape2::melt(df.cm)
+  df.table.col <- reshape2::melt(df.cm.col)
+  df.table <- left_join(df.table, df.table.col, by = c("True", "Pred"))
+
+
+  # calculate accuracy and class accuracy
+  acc.vector <- c(diag(df.cm)) / c(rowSums(df.cm))
+  class.acc <- data.frame(Pred = "Class Acc.", True = names(acc.vector), value = acc.vector)
+  acc <- sum(diag(df.cm)) / sum(df.cm)
+
+  # Determine text color based on accuracy threshold (white if >50%, black otherwise)
+  df.table$text_color <- ifelse(df.table$value.y > 0.4, "white", "black")
+
+  # plot
+  ggplot() +
+    geom_tile(aes(x = Pred, y = True, fill = value.y),
+      data = df.table, size = 0.2, color = grey(0.5)
+    ) +
+    geom_tile(aes(x = Pred, y = True),
+      data = df.table[df.table$True == df.table$Pred, ],
+      size = 1, color = "black", fill = "transparent"
+    ) +
+    scale_x_discrete(position = "top", limits = c(levels(df.table$Pred), "Class Acc.")) +
+    scale_y_discrete(limits = rev(unique(levels(df.table$Pred)))) +
+    # labs(x = pred.lab, y = true.lab, fill = NULL,
+    #      title = paste0(title, "\nAccuracy ", round(100 * acc, 1), "%")) +
+    geom_text(aes(x = Pred, y = True, label = value.x, color = text_color),
+      data = df.table, size = 8
+    ) +
+    geom_text(data = class.acc, aes(Pred, True, label = paste0(round(100 * value), "%")), color = "black", size = 6) + # Edit the Acc col next to the plot
+    scale_fill_gradient(
+      low = low.col, high = high.col, labels = scales::percent,
+      limits = c(0, 1), breaks = c(0, 0.5, 1)
+    ) +
+    scale_color_identity() + # Ensures specified colors are used without mapping to a legend
+    guides(size = F) +
+    theme_bw() +
+    theme(
+      panel.border = element_blank(), legend.position = "right",
+      axis.text = element_text(color = "black", size = 16, family = "Arial"), axis.ticks = element_blank(),
+      panel.grid = element_blank(), axis.text.x.top = element_text(angle = 30, vjust = 0, hjust = 0),
+      axis.title = element_text(size = 16, family = "Arial"), # Increase size of axis titles
+      legend.title = element_text(size = 14, family = "Arial"), # Increase size of legend title
+      legend.text = element_text(size = 14, family = "Arial"),
+      legend.justification = "top"
+    ) +
+    coord_fixed() +
+    labs(y = paste("Human Label"), x = paste("YOLOv8 Predictions"), fill = "Class \nPerc. ")
+}
+```
+
+# Per Frame
+
+## BFFs Study
+
+### Load csv
+
+```{r}
+levels <- c("Body", "Face", "Self", "Judge", "Other", "Uncodable")
+
+bffs <- read_csv("../data/bffs_validation_data.csv") |>
+  mutate(
+    Prediction = case_when(
+      Code == 0 ~ "Body",
+      Code == 1 ~ "Face",
+      Code == 2 ~ "Self",
+      Code == 3 ~ "Other",
+      Code == 4 ~ "Judge",
+      Code == 99 ~ "Uncodable",
+    ),
+    Target = case_when(
+      hand_code == 0 ~ "Body",
+      hand_code == 1 ~ "Face",
+      hand_code == 2 ~ "Self",
+      hand_code == 3 ~ "Other",
+      hand_code == 4 ~ "Judge",
+      hand_code == 99 ~ "Uncodable",
+    )
+  )
+
+bffs$Prediction <- fct_relevel(bffs$Prediction, levels)
+bffs$Target <- fct_relevel(bffs$Target, levels)
+```
+
+### Creating confusion matrix
+
+```{r}
+cf_bffs <- confusionMatrix(data = bffs$Prediction, reference = bffs$Target)
+cf_bffs
+```
+
+### Plot the overall stats
+
+```{r}
+# confusion matrix statistics as data.frame
+bffs_statistics <- data.frame(cf_bffs$overall)
+# round the values
+bffs_statistics_table <- bffs_statistics |>
+  rename("Overall Stats" = cf_bffs.overall) |>
+  mutate("Overall Stats" = round(`Overall Stats`, 2)) |>
+  rownames_to_column(var = " ") |>
+  filter( ` ` != "McnemarPValue"	) |>
+  gt() |>
+  cols_width(`Overall Stats` ~ px(55),
+             ` ` ~ px(125)) |>
+  cols_label(
+    `Overall Stats` = md("Overall<br>Stats")
+  )
+
+bffs_statistics
+
+gtsave(data = bffs_statistics_table, filename = "../figures/bffs_statistics.png", expand = 10)
+```
+
+### Plot the class by class stats
+
+```{r}
+# confusion matrix statistics as data.frame
+bffs_statistics_per_class <- data.frame(cf_bffs$byClass)
+
+
+# round the values
+bffs_statistics_table_by_class  <- bffs_statistics_per_class |>
+  rename("Balanced Accuracy" = Balanced.Accuracy) |>
+  select(c("Recall","Specificity","Precision","Balanced Accuracy", "F1")) |>
+  mutate( across(where(is.double), ~ round(.x, 2))) |>
+  rownames_to_column(var = "AOI") |>
+    rowwise() |>
+    mutate(AOI = str_sub(AOI, start = 7))  |> 
+  gt() |>
+  tab_options(
+    table.border.top.color = "white",
+    table.font.size = 12,
+    column_labels.font.weight = "bold",
+    column_labels.border.top.width = 3,
+    column_labels.border.top.color = "black",
+    column_labels.border.bottom.width = 3,
+    column_labels.border.bottom.color = "black",
+    table_body.border.bottom.width = 3,
+    table_body.border.bottom.color = "black",
+    table.border.bottom.color = "white",
+    #table.width = pct(100),
+    table.background.color = "white",
+    table_body.hlines.width = px(0),
+    data_row.padding = px(3)
+  ) |>
+  cols_align(align = "left", columns = 1) |>
+  cols_align(align = "center", columns = 2:last_col()) |>  # Align numeric cols
+  cols_label(
+    "Balanced Accuracy" = md("Balanced<br>Accuracy")
+  )
+
+bffs_statistics_table_by_class
+
+gtsave(data = bffs_statistics_table_by_class,
+       filename = "../figures/bffs_statistics_by_class.pdf")
+```
+
+### Plot the confusion matrix
+
+```{r}
+bffs_plot <- conf_matrix(bffs$Target, bffs$Prediction, type = "Frame")
+
+
+img <- load.image("../figures/bffs_statistics.png")
+
+
+bffs_plot_grid <- ggdraw(bffs_plot) +
+  draw_image(img, scale = .25, x = .325, y = -.07)
+
+ggsave(filename = "../figures/bffs_plot.png", plot = bffs_plot_grid, width = 14, height = 8, dpi = 300)
+
+
+bffs_poster_plot <- conf_matrix_poster(bffs$Target, bffs$Prediction)
+ggsave(filename = "../figures/bffs_poster_plot.png", plot = bffs_poster_plot, width = 14, height = 8, dpi = 300)
+```
+
+![](../figures/bffs_plot.png)
+
+## PCAT Study
+
+### Load csv
+
+```{r}
+pcat <- read_csv("../data/pcat_validation_data.csv")  |> 
+  mutate(
+    Prediction = case_when(
+      Code == 0 ~ "Body",
+      Code == 1 ~ "Face",
+      Code == 2 ~ "Self",
+      Code == 3 ~ "Other",
+      Code == 4 ~ "Judge",
+      Code == 99 ~ "Uncodable",
+    ),
+    Target = case_when(
+      hand_code == 0 ~ "Body",
+      hand_code == 1 ~ "Face",
+      hand_code == 2 ~ "Self",
+      hand_code == 3 ~ "Other",
+      hand_code == 4 ~ "Judge",
+      hand_code == 99 ~ "Uncodable",
+    )
+  )
+
+pcat$Prediction <- fct_relevel(pcat$Prediction, levels)
+pcat$Target <- fct_relevel(pcat$Target, levels)
+```
+
+### Creating confusion matrix
+
+```{r}
+cf_pcat <- confusionMatrix(data = pcat$Prediction, reference = pcat$Target, mode = "prec_recall")
+
+cf_pcat
+```
+
+### Plot the stats
+
+```{r}
+# confusion matrix statistics as data.frame
+pcat_statistics <- data.frame(cf_pcat$overall)
+# round the values
+pcat_statistics_table <- pcat_statistics |>
+  rename("Overall Stats" = cf_pcat.overall) |>
+  mutate("Overall Stats" = round(`Overall Stats`, 2)) |>
+  rownames_to_column(var = " ") |>
+  filter( ` ` != "McnemarPValue"	) |>
+  gt() |>
+  cols_width(`Overall Stats` ~ px(55),
+             ` ` ~ px(125)) |>
+  cols_label(
+    `Overall Stats` = md("Overall<br>Stats")
+  )
+
+pcat_statistics_table
+
+gtsave(data = pcat_statistics_table, filename = "../figures/pcat_statistics.png", expand = 10)
+```
+
+### Plot the class by class stats
+
+```{r}
+# confusion matrix statistics as data.frame
+pcat_statistics_per_class <- data.frame(cf_pcat$byClass)
+
+# round the values
+pcat_statistics_table_by_class  <- pcat_statistics_per_class |>
+  rename("Balanced Accuracy" = Balanced.Accuracy) |>
+  select(c("Recall","Specificity","Precision","Balanced Accuracy", "F1")) |>
+  mutate( across(where(is.double), ~ round(.x, 2))) |>
+  rownames_to_column(var = "AOI") |>
+    rowwise() |>
+    mutate(AOI = str_sub(AOI, start = 7))  |> 
+  gt() |>
+  tab_options(
+    table.border.top.color = "white",
+    table.font.size = 12,
+    column_labels.font.weight = "bold",
+    column_labels.border.top.width = 3,
+    column_labels.border.top.color = "black",
+    column_labels.border.bottom.width = 3,
+    column_labels.border.bottom.color = "black",
+    table_body.border.bottom.width = 3,
+    table_body.border.bottom.color = "black",
+    table.border.bottom.color = "white",
+    #table.width = pct(100),
+    table.background.color = "white",
+    table_body.hlines.width = px(0),
+    data_row.padding = px(3)
+  ) |>
+  cols_align(align = "left", columns = 1) |>
+  cols_align(align = "center", columns = 2:last_col()) |>  # Align numeric cols
+  cols_label(
+    "Balanced Accuracy" = md("Balanced<br>Accuracy")
+  )
+
+pcat_statistics_table_by_class
+
+gtsave(data = pcat_statistics_table_by_class,
+       filename = "../figures/pcat_statistics_by_class.pdf")
+```
+
+### Plot the confusion matrix
+
+```{r}
+pcat_plot <- conf_matrix(pcat$Target, pcat$Prediction, type = "Frame")
+
+
+img <- load.image("../figures/pcat_statistics.png")
+
+
+pcat_plot_grid <- ggdraw(pcat_plot) +
+  draw_image(img, scale = .25, x = .325, y = -.07)
+
+ggsave(filename = "../figures/pcat_plot.png", plot = pcat_plot_grid, width = 14, height = 8, dpi = 300)
+
+pcat_poster_plot <- conf_matrix_poster(pcat$Target, pcat$Prediction)
+ggsave(filename = "../figures/pcat_poster_plot.png", plot = pcat_poster_plot, width = 14, height = 8, dpi = 300)
+
+```
+
+![](../figures/pcat_plot.png)
+## Main Table 
+```{r}
+table1 <- bffs_statistics_per_class |>
+  rename("Balanced Accuracy" = Balanced.Accuracy) |>
+  select(c("Sensitivity","Specificity","Precision","Balanced Accuracy", "F1")) |>
+  mutate( across(where(is.double), ~ round(.x, 2))) |>
+  rownames_to_column(var = "AOI") |>
+    rowwise() |>
+    mutate(AOI = str_sub(AOI, start = 7))  
+
+table2 <- pcat_statistics_per_class |>
+  rename("Balanced Accuracy" = Balanced.Accuracy) |>
+  select(c("Sensitivity","Specificity","Precision","Balanced Accuracy", "F1")) |>
+  mutate( across(where(is.double), ~ round(.x, 2))) |>
+  rownames_to_column(var = "AOI") |>
+    rowwise() |>
+    mutate(AOI = str_sub(AOI, start = 7)) 
+
+main_table <- rbind(table1, table2)
+
+main_table_per_frame <- main_table |> 
+    gt() |> 
+  tab_row_group(
+    label = md("**Study 2 (PCAT)**"),
+    rows = 6:11,
+    id = "pcat") |>
+  tab_row_group(
+    label = md("**Study 1 (BFFs)**"),
+    rows = 1:5,
+    id ="bbfs") |>
+  tab_options(
+    table.border.top.color = "white",
+    table.font.size = 12,
+    column_labels.font.weight = "bold",
+    column_labels.border.top.width = 3,
+    column_labels.border.top.color = "black",
+    column_labels.border.bottom.width = 3,
+    column_labels.border.bottom.color = "black",
+    table_body.border.bottom.width = 3,
+    table_body.border.bottom.color = "black",
+    row_group.border.bottom.width = 3,
+    row_group.border.bottom.color = "black",
+    table.border.bottom.color = "white",
+    #table.width = pct(100),
+    table.background.color = "white",
+    table_body.hlines.width = px(0),
+    data_row.padding = px(3)
+  ) |>
+  cols_align(align = "left", columns = 1) |>
+  cols_align(align = "center", columns = 2:last_col()) |>  # Align numeric cols
+  cols_label(
+    "Balanced Accuracy" = md("Balanced<br>Accuracy")
+  )  |> 
+  tab_style(
+    style = cell_borders(sides = "top", 
+                         weight = px(3), 
+                         color = "black"),
+    locations = cells_row_groups(groups = "pcat")
+  )
+
+gtsave(data = main_table_per_frame,
+       filename = "../figures/main_table_per_frame.pdf")
+```
+
+
+# Per Second
+
+## BFFs Study
+
+### Clean csv
+
+```{r}
+bffs_per_sec <- bffs |>
+  distinct(id,time, .keep_all = TRUE) |>
+  select(id, time, Code_sec, hand_code_sec) |>
+    mutate(
+    Prediction = case_when(
+      Code_sec == 0 ~ "Body",
+      Code_sec == 1 ~ "Face",
+      Code_sec == 2 ~ "Self",
+      Code_sec == 3 ~ "Other",
+      Code_sec == 4 ~ "Judge",
+      Code_sec == 99 ~ "Uncodable",
+    ),
+    Target = case_when(
+      hand_code_sec == 0 ~ "Body",
+      hand_code_sec == 1 ~ "Face",
+      hand_code_sec == 2 ~ "Self",
+      hand_code_sec == 3 ~ "Other",
+      hand_code_sec == 4 ~ "Judge",
+      hand_code_sec == 99 ~ "Uncodable",
+    )
+  )
+
+bffs_per_sec$Prediction <- fct_relevel(bffs_per_sec$Prediction, levels)
+bffs_per_sec$Target <- fct_relevel(bffs_per_sec$Target, levels)
+```
+
+### Creating confusion matrix
+
+```{r}
+cf_bffs_per_sec <- confusionMatrix(data = bffs_per_sec$Prediction, reference = bffs_per_sec$Target)
+
+cf_bffs_per_sec
+```
+
+### Plot the stats
+
+```{r}
+# confusion matrix statistics as data.frame
+bffs_per_sec_statistics <- data.frame(cf_bffs_per_sec$overall)
+# round the values
+bffs_per_sec_statistics_table <- bffs_per_sec_statistics |>
+  rename("Overall Stats" = cf_bffs_per_sec.overall) |>
+  mutate("Overall Stats" = round(`Overall Stats`, 2)) |>
+  rownames_to_column(var = " ") |>
+  filter( ` ` != "McnemarPValue"	) |>
+  gt() |>
+  cols_width(`Overall Stats` ~ px(55),
+             ` ` ~ px(125)) |>
+  cols_label(
+    `Overall Stats` = md("Overall<br>Stats")
+  ) 
+
+gtsave(data = bffs_per_sec_statistics_table, filename = "../figures/bffs_per_sec_statistics.png", expand = 10)
+
+bffs_per_sec_statistics_table
+```
+
+### Plot the class by class stats
+
+```{r}
+# confusion matrix statistics as data.frame
+bffs_statistics_per_class_sec <- data.frame(cf_bffs_per_sec$byClass)
+
+# round the values
+bffs_statistics_table_by_class_sec  <- bffs_statistics_per_class_sec |>
+  rename("Detection Rate" = Detection.Rate,
+         "Neg Pred Value" = Neg.Pred.Value,
+         "Pos Pred Value" = Pos.Pred.Value) |>
+    select(1:"F1") |>
+  mutate( across(where(is.double), ~ round(.x, 2))) |>
+  rownames_to_column(var = "AOI") |>
+    rowwise() |>
+    mutate(AOI = str_sub(AOI, start = 7)) |>
+  gt() |>
+  tab_options(
+    table.border.top.color = "white",
+    table.font.size = 12,
+    column_labels.font.weight = "bold",
+    column_labels.border.top.width = 3,
+    column_labels.border.top.color = "black",
+    column_labels.border.bottom.width = 3,
+    column_labels.border.bottom.color = "black",
+    table_body.border.bottom.width = 3,
+    table_body.border.bottom.color = "black",
+    table.border.bottom.color = "white",
+    #table.width = pct(100),
+    table.background.color = "white",
+    table_body.hlines.width = px(0),
+    data_row.padding = px(3)
+  ) |>
+  cols_align(align = "left", columns = 1) |>
+  cols_align(align = "center", columns = 2:last_col()) |>  # Align numeric cols
+  cols_label(
+    "Neg Pred Value" = md("Negative<br>Pred Value"),
+    "Pos Pred Value" = md("Positive<br>Pred Value")
+  )
+
+bffs_statistics_table_by_class_sec
+
+gtsave(data = bffs_statistics_table_by_class_sec,
+       filename = "../figures/bffs_statistics_by_class_sec.pdf")
+```
+
+### Plot the confusion matrix
+
+```{r}
+bffs_per_sec_plot <- conf_matrix(bffs_per_sec$Target, bffs_per_sec$Prediction, type = "Second")         
+
+img <- load.image("../figures/bffs_per_sec_statistics.png")
+
+
+bffs_per_sec_plot_grid <- ggdraw(bffs_per_sec_plot) +
+  draw_image(img, scale = .25, x = .325, y = -.07)
+
+ggsave(filename = "../figures/bffs_per_sec_plot.png", plot = bffs_per_sec_plot_grid, width = 14, height = 8, dpi = 300)
+```
+
+![](../figures/bffs_per_sec_plot.png)
+
+## PCAT Study
+
+### Clean csv
+
+```{r}
+pcat_per_sec <- pcat |>
+  distinct(id,time, .keep_all = TRUE) |>
+  select(id, time, Code_sec, hand_code_sec) |>
+    mutate(
+    Prediction = case_when(
+      Code_sec == 0 ~ "Body",
+      Code_sec == 1 ~ "Face",
+      Code_sec == 2 ~ "Self",
+      Code_sec == 3 ~ "Other",
+      Code_sec == 4 ~ "Judge",
+      Code_sec == 99 ~ "Uncodable",
+    ),
+    Target = case_when(
+      hand_code_sec == 0 ~ "Body",
+      hand_code_sec == 1 ~ "Face",
+      hand_code_sec == 2 ~ "Self",
+      hand_code_sec == 3 ~ "Other",
+      hand_code_sec == 4 ~ "Judge",
+      hand_code_sec == 99 ~ "Uncodable",
+    )
+  )
+
+pcat_per_sec$Prediction <- fct_relevel(pcat_per_sec$Prediction, levels)
+pcat_per_sec$Target <- fct_relevel(pcat_per_sec$Target, levels)
+```
+
+### Creating confusion matrix
+
+```{r}
+cf_pcat_per_sec <- confusionMatrix(data = pcat_per_sec$Prediction, reference = pcat_per_sec$Target)
+
+cf_pcat_per_sec
+```
+
+### Plot the stats
+
+```{r}
+# confusion matrix statistics as data.frame
+pcat_per_sec_statistics <- data.frame(cf_pcat_per_sec$overall)
+# round the values
+pcat_per_sec_statistics_table <- pcat_per_sec_statistics |>
+  rename("Overall Stats" = cf_pcat_per_sec.overall) |>
+  mutate("Overall Stats" = round(`Overall Stats`, 2)) |>
+  rownames_to_column(var = " ") |>
+  filter( ` ` != "McnemarPValue"	) |>
+  gt() |>
+  cols_width(`Overall Stats` ~ px(55),
+             ` ` ~ px(125)) |>
+  cols_label(
+    `Overall Stats` = md("Overall<br>Stats")
+  )
+
+pcat_per_sec_statistics_table
+
+gtsave(data = pcat_per_sec_statistics_table, filename = "../figures/pcat_per_sec_statistics.png", expand = 10)
+```
+
+### Plot the class by class stats
+
+```{r}
+# confusion matrix statistics as data.frame
+pcat_statistics_per_class_sec <- data.frame(cf_pcat_per_sec$byClass)
+
+# round the values
+pcat_statistics_table_by_class_sec  <- pcat_statistics_per_class_sec |>
+  rename("Detection Rate" = Detection.Rate,
+         "Neg Pred Value" = Neg.Pred.Value,
+         "Pos Pred Value" = Pos.Pred.Value) |>
+    select(1:"F1") |>
+  mutate( across(where(is.double), ~ round(.x, 2))) |>
+  rownames_to_column(var = "AOI") |>
+    rowwise() |>
+    mutate(AOI = str_sub(AOI, start = 7)) |>
+  gt() |>
+  tab_options(
+    table.border.top.color = "white",
+    table.font.size = 12,
+    column_labels.font.weight = "bold",
+    column_labels.border.top.width = 3,
+    column_labels.border.top.color = "black",
+    column_labels.border.bottom.width = 3,
+    column_labels.border.bottom.color = "black",
+    table_body.border.bottom.width = 3,
+    table_body.border.bottom.color = "black",
+    table.border.bottom.color = "white",
+    #table.width = pct(100),
+    table.background.color = "white",
+    table_body.hlines.width = px(0),
+    data_row.padding = px(3)
+  ) |>
+  cols_align(align = "left", columns = 1) |>
+  cols_align(align = "center", columns = 2:last_col()) |>  # Align numeric cols
+  cols_label(
+    "Neg Pred Value" = md("Negative<br>Pred Value"),
+    "Pos Pred Value" = md("Positive<br>Pred Value")
+  )
+
+pcat_statistics_table_by_class_sec
+
+gtsave(data = pcat_statistics_table_by_class_sec,
+       filename = "../figures/pcat_statistics_by_class_sec.pdf", zoom = 1)
+
+```
+
+### Plot the confusion matrix
+
+```{r}
+pcat_per_sec_plot <- conf_matrix(pcat_per_sec$Target, pcat_per_sec$Prediction, type = "Second")
+
+img <- load.image("../figures/pcat_per_sec_statistics.png")
+
+pcat_per_sec_plot_grid <- ggdraw(pcat_per_sec_plot) +
+  draw_image(img, scale = .25, x = .325, y = -.07)
+
+ggsave(filename = "../figures/pcat_per_sec_plot.png", plot = pcat_per_sec_plot_grid, width = 14, height = 8, dpi = 300)
+```
+
+![](../figures/pcat_per_sec_plot.png)
+
+## Main Table 
+```{r}
+table1 <- bffs_statistics_per_class_sec |>
+  rename("Balanced Accuracy" = Balanced.Accuracy) |>
+  select(c("Sensitivity","Specificity","Precision","Balanced Accuracy", "F1")) |>
+  mutate( across(where(is.double), ~ round(.x, 2))) |>
+  rownames_to_column(var = "AOI") |>
+    rowwise() |>
+    mutate(AOI = str_sub(AOI, start = 7))  
+
+table2 <- pcat_statistics_per_class_sec |>
+  rename("Balanced Accuracy" = Balanced.Accuracy) |>
+  select(c("Sensitivity","Specificity","Precision","Balanced Accuracy", "F1")) |>
+  mutate( across(where(is.double), ~ round(.x, 2))) |>
+  rownames_to_column(var = "AOI") |>
+    rowwise() |>
+    mutate(AOI = str_sub(AOI, start = 7))  
+
+main_table <- rbind(table1, table2)
+
+main_table_per_second <- main_table |> 
+    gt() |> 
+  tab_row_group(
+    label = md("**Study 2 (PCAT)**"),
+    rows = 6:11,
+    id = "pcat") |>
+  tab_row_group(
+    label = md("**Study 1 (BFFs)**"),
+    rows = 1:5,
+    id ="bbfs") |>
+  tab_options(
+    table.border.top.color = "white",
+    table.font.size = 12,
+    column_labels.font.weight = "bold",
+    column_labels.border.top.width = 3,
+    column_labels.border.top.color = "black",
+    column_labels.border.bottom.width = 3,
+    column_labels.border.bottom.color = "black",
+    table_body.border.bottom.width = 3,
+    table_body.border.bottom.color = "black",
+    row_group.border.bottom.width = 3,
+    row_group.border.bottom.color = "black",
+    table.border.bottom.color = "white",
+    #table.width = pct(100),
+    table.background.color = "white",
+    table_body.hlines.width = px(0),
+    data_row.padding = px(3)
+  ) |>
+  cols_align(align = "left", columns = 1) |>
+  cols_align(align = "center", columns = 2:last_col()) |>  # Align numeric cols
+  cols_label(
+    "Balanced Accuracy" = md("Balanced<br>Accuracy")
+  )  |> 
+  tab_style(
+    style = cell_borders(sides = "top", 
+                         weight = px(3), 
+                         color = "black"),
+    locations = cells_row_groups(groups = "pcat")
+  )
+
+gtsave(data = main_table_per_second,
+       filename = "../figures/main_table_per_second.pdf")
+```

@@ -1,0 +1,657 @@
+---
+title: "04_Exploratory_Analyses"
+author: "Dr. Joscelin Rocha-Hidalgo"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE)
+```
+
+# Setup
+
+## Install and load packages
+
+```{r}
+# Installing pacman and loading packages
+if (!("pacman" %in% installed.packages()[, ])) {
+  install.packages("pacman")
+}
+pacman::p_load(tidyverse, ggpubr, car, report)
+```
+
+# Load DFs
+
+```{r}
+levels <- c("Body", "Face", "Self", "Judge", "Other", "Uncodable")
+
+bffs <- read_csv("../data/bffs_validation_data.csv")
+
+bffs_demo <- read_csv("../data/bffs_demo.csv") |> 
+  select(-c(dyad,subject))
+
+pcat <- read_csv("../data/pcat_validation_data.csv")
+
+pcat_demo <- read_csv("../data/pcat_demo.csv") |> 
+  select(-c(dyad,subject))
+```
+
+# BFFs
+
+## Id Faces:
+
+### Male vs Female partner
+
+Here I am testing the average accuracy of YOLOv8 to agree with the human codes. I first filtered only the frames identifying partner's face by a human and then calculate accuracy of this classification by the algorithm. accuracy = average of correct classification (i.e., Code == hand_code)
+
+```{r}
+dyad_accuracy <- bffs |> 
+  left_join(bffs_demo) |> 
+  filter(hand_code == 1) |> 
+  rowwise() |> 
+  mutate(accuracy = ifelse(Code == hand_code, 1, 0)) |> 
+  group_by(id,gender_dyad) %>%
+  summarise(mean_acc = mean(accuracy),
+            sd_acc = sd(accuracy),
+            n = n())
+```
+
+#### Assumptions
+
+```{r}
+## Normality
+dyad_accuracy |> 
+  group_by(gender_dyad) %>% 
+  summarise(
+    n = n(),
+    shapiro_p = shapiro.test(mean_acc)$p.value
+  )
+
+ggqqplot(dyad_accuracy, "mean_acc", facet.by = "gender_dyad")
+
+## Variance
+
+leveneTest(dyad_accuracy$mean_acc, dyad_accuracy$gender_dyad)
+```
+
+-   Normality both the shapiro test and the qqplot confirm that the Male sample did not pass the normality test.
+-   Groups failed to have equal variances.
+
+**Conclusion**: a non parametric test needs to be used
+
+#### Test
+
+```{r}
+#t.test(mean_acc ~ gender_dyad, data = dyad_accuracy)
+wilcox.test(mean_acc ~ gender_dyad, data = dyad_accuracy)
+```
+
+To examine whether the accuracy of the YOLOv8 model differed by the gender composition of the dyad, we compared model performance on videos featuring male versus female participants. Accuracy was defined as the proportion of frames where the model's AOI label matched the human-coded label for the "partner’s face" category. Levene’s test for homogeneity of variance indicated a significant difference in variance across gender groups, *F*(1, 18) = 4.55, *p* = .047. Therefore, a non-parametric Wilcoxon rank sum test was used. Results showed no statistically significant difference in YOLOv8’s classification accuracy between videos with male and female dyads, *W* = 28, *p* = .105. These findings suggest that model performance on face identification did not significantly vary by the participant's gender in the video.
+
+### Latinx vs Non-Latinx
+
+Here I am testing the average accuracy of yolo to agree with the human codes. I first filtered only the frames identifying partner's face by a human and then calculate accuracy of this classification by the algorithm. accuracy = average of correct classification (i.e., Code == hand_code)
+
+```{r}
+dyad_accuracy <- bffs |> 
+  left_join(bffs_demo) |> 
+  filter(hand_code == 1) |> 
+  rowwise() |> 
+  mutate(accuracy = ifelse(Code == hand_code, 1, 0),
+         latinx = ifelse(ethnicity_partner_code != 1, 1, 0)) |> 
+  group_by(id,latinx) %>%
+  summarise(mean_acc = mean(accuracy),
+            sd_acc = sd(accuracy),
+            n = n())
+
+```
+
+#### Assumptions
+
+```{r}
+## Normality
+dyad_accuracy |> 
+  group_by(latinx) %>% 
+  summarise(
+    n = n(),
+    shapiro_p = shapiro.test(mean_acc)$p.value
+  )
+
+ggqqplot(dyad_accuracy, "mean_acc", facet.by = "latinx")
+
+## Variance
+
+leveneTest(dyad_accuracy$mean_acc, dyad_accuracy$latinx)
+```
+
+-   Normality both the shapiro test and the qqplot confirm that the White sample did not pass the normality test.
+-   Groups have equal variances.
+
+**Conclusion**: Despite the groups having equal variances, the data failed to pass the normality test (specifically for the non-latinx sample) and therefore a non parametric test needs to be used
+
+#### Test
+
+```{r}
+#t_test<-t.test(mean_acc ~ non_white, data = dyad_accuracy)
+wilcox.test(mean_acc ~ latinx, data = dyad_accuracy)
+```
+
+We tested YOLOv8’s performance varied based on the race of individuals featured in the video as either Latinx versus Non-Latinx. Accuracy was calculated as the proportion of correctly labeled frames for the partner’s face AOI, based on agreement with human coding. A Wilcoxon rank sum test comparing videos featuring Latinx versus Non-Latinx participants indicated no significant difference in classification accuracy, *W* = 51, *p* = .266. These results suggest that, within the current sample, model performance on face identification did not differ by participant latinx ethnicity.
+
+
+### White vs Non-White partner
+
+Here I am testing the average accuracy of yolo to agree with the human codes. I first filtered only the frames identifying partner's face by a human and then calculate accuracy of this classification by the algorithm. accuracy = average of correct classification (i.e., Code == hand_code)
+
+```{r}
+dyad_accuracy <- bffs |> 
+  left_join(bffs_demo) |> 
+  filter(hand_code == 1) |> 
+  rowwise() |> 
+  mutate(accuracy = ifelse(Code == hand_code, 1, 0),
+         non_white = ifelse(race_partner != "White", 1, 0)) |> 
+  group_by(id,non_white) %>%
+  summarise(mean_acc = mean(accuracy),
+            sd_acc = sd(accuracy),
+            n = n())
+
+```
+
+#### Assumptions
+
+```{r}
+## Normality
+dyad_accuracy |> 
+  group_by(non_white) %>% 
+  summarise(
+    n = n(),
+    shapiro_p = shapiro.test(mean_acc)$p.value
+  )
+
+ggqqplot(dyad_accuracy, "mean_acc", facet.by = "non_white")
+
+## Variance
+
+leveneTest(dyad_accuracy$mean_acc, dyad_accuracy$non_white)
+```
+
+-   Normality both the shapiro test and the qqplot confirm that the White sample did not pass the normality test.
+-   Groups have equal variances.
+
+**Conclusion**: Despite the groups having equal variances, the data failed to pass the normality test (specifically for the white sample) and therefore a non parametric test needs to be used
+
+#### Test
+
+```{r}
+#t_test<-t.test(mean_acc ~ non_white, data = dyad_accuracy)
+wilcox.test(mean_acc ~ non_white, data = dyad_accuracy)
+```
+
+We tested YOLOv8’s performance varied based on the race of individuals featured in the video as either white vs non-white and their specific race category. Accuracy was calculated as the proportion of correctly labeled frames for the partner’s face AOI, based on agreement with human coding. A Wilcoxon rank sum test comparing videos featuring White versus Non-White participants indicated no significant difference in classification accuracy, *W* = 45, *p* = .766. These results suggest that, within the current sample, model performance on face identification did not differ by participant race.
+
+#### Across the 3 races:
+
+```{r}
+dyad_accuracy <- bffs |> 
+  left_join(bffs_demo) |> 
+  filter(hand_code == 1) |> 
+  rowwise() |> 
+  mutate(accuracy = ifelse(Code == hand_code, 1, 0)) |> 
+  group_by(id,race_partner) %>%
+  summarise(mean_acc = mean(accuracy),
+            sd_acc = sd(accuracy),
+            n = n())
+
+anova_model <- aov(mean_acc ~ race_partner, data = dyad_accuracy)
+```
+
+#### Assumptions
+
+```{r}
+## Normality
+### Per group
+dyad_accuracy |> 
+  group_by(race_partner) %>% 
+  summarise(
+    n = n(),
+    shapiro_p = shapiro.test(mean_acc)$p.value
+  )
+ggqqplot(dyad_accuracy, "mean_acc", facet.by = "race_partner")
+
+### residuals [preferred]
+qqPlot(anova_model$residuals,
+  id = FALSE # id = FALSE to remove point identification
+)
+
+
+## Variance
+
+leveneTest(dyad_accuracy$mean_acc, dyad_accuracy$race_partner)
+```
+
+-   Normality both the shapiro test and the qqplot confirm that the White sample did not pass the normality test but when residuals are analyzed. The residuals qqplot is mostly ok but since our sample is small, out of caution, a non parametric test would be recommended
+-   Groups have equal variances.
+
+**Conclusion**: Despite the groups having equal variances, the data failed to pass the normality test (specifically for the non-white sample) and therefore a non parametric test needs to be used
+
+#### Test
+
+```{r}
+#report(anova_model)
+kruskal.test(mean_acc ~ race_partner, data = dyad_accuracy)
+```
+
+A Kruskal-Wallis rank sum test revealed no significant differences in mean model accuracy across the three racial groups of the partner (White, Asian, and Black/African American), *X*²(2) = 3.01, *p* = .222. These results suggest that, within the current sample, the YOLOv8 model performed comparably across videos featuring participants from different racial backgrounds.
+
+## Id Partners (face+body):
+
+I don't think this something we should be asking. I am not sure how whether you are male or female could affect if a human body is identified or not but I am running them here for exploratory purposes and will likely deleted after our meeting, Marisa.
+
+### Male vs Female partner
+
+Here I am testing the average accuracy of YOLOv8 to agree with the human codes. I first filtered only the frames identifying partner's face by a human and then calculate accuracy of this classification by the algorithm. accuracy = average of correct classification (i.e., Code == hand_code)
+
+```{r}
+dyad_accuracy <- bffs |> 
+  left_join(bffs_demo) |> 
+  filter(hand_code == 1 | hand_code == 0 ) |> 
+  rowwise() |> 
+  mutate(accuracy = ifelse(Code == hand_code, 1, 0)) |> 
+  group_by(id,gender_dyad) %>%
+  summarise(mean_acc = mean(accuracy),
+            sd_acc = sd(accuracy),
+            n = n())
+
+```
+
+#### Assumptions
+
+```{r}
+## Normality
+dyad_accuracy |> 
+  group_by(gender_dyad) %>% 
+  summarise(
+    n = n(),
+    shapiro_p = shapiro.test(mean_acc)$p.value
+  )
+
+ggqqplot(dyad_accuracy, "mean_acc", facet.by = "gender_dyad")
+
+## Variance
+
+leveneTest(dyad_accuracy$mean_acc, dyad_accuracy$gender_dyad)
+```
+
+-   Normality both the shapiro test and the qqplot confirm that the Female sample did not pass the normality test.
+-   Groups have equal variances.
+
+**Conclusion**: a non parametric test needs to be used
+
+#### Test
+
+```{r}
+#t.test(mean_acc ~ gender_dyad, data = dyad_accuracy)
+wilcox.test(mean_acc ~ gender_dyad, data = dyad_accuracy)
+```
+
+To examine whether the accuracy of the YOLOv8 model differed by the gender composition of the dyad, we compared model performance on videos featuring male versus female participants. Accuracy was defined as the proportion of frames where the model's AOI label matched the human-coded label for the "partner’s face and body" categories. Shapiro and visual tests indicated that one of the samples did not meet the normality assumption. Therefore, a non-parametric Wilcoxon rank sum test was used. Results showed no statistically significant difference in YOLOv8’s classification accuracy between videos with male and female dyads, *W* = 41 *p* = .5288. These findings suggest that model performance on face identification did not significantly vary by the participant's gender in the video.
+
+# PCAT
+
+## Id Faces:
+
+### Males vs Female partner
+
+Here I am testing the average accuracy of yolo to agree with the human codes. I first filtered only the frames identifying partner's face by a human and then calculate accuracy of this classification by the algorithm. accuracy = average of correct classification (i.e., Code == hand_code)
+
+```{r}
+dyad_accuracy <- pcat |> 
+  left_join(pcat_demo) |> 
+  filter(hand_code == 1) |> 
+  rowwise() |> 
+  mutate(accuracy = ifelse(Code == hand_code, 1, 0)) |> 
+  group_by(id,female_partner) %>%
+  summarise(mean_acc = mean(accuracy),
+            sd_acc = sd(accuracy),
+            n = n())
+
+t.test(mean_acc ~ female_partner, data = dyad_accuracy)
+
+```
+
+#### Assumptions
+
+```{r}
+## Normality
+dyad_accuracy |> 
+  group_by(female_partner) %>% 
+  summarise(
+    n = n(),
+    shapiro_p = shapiro.test(mean_acc)$p.value
+  )
+
+ggqqplot(dyad_accuracy, "mean_acc", facet.by = "female_partner")
+
+## Variance
+
+leveneTest(dyad_accuracy$mean_acc, dyad_accuracy$female_partner)
+```
+
+-   Both the shapiro test and the qqplot confirm that both samples did not pass the normality test.
+-   Groups have equal variances.
+
+**Conclusion**: a non parametric test needs to be used due to failing the normality tests
+
+#### Test
+
+```{r}
+#t.test(mean_acc ~ female_partner, data = dyad_accuracy)
+wilcox.test(mean_acc ~ female_partner, data = dyad_accuracy, exact = T)
+```
+
+To examine whether the accuracy of the YOLOv8 model differed by the gender composition of the dyad, we compared model performance on videos featuring male versus female participants. Accuracy was defined as the proportion of frames where the model's AOI label matched the human-coded label for the "partner’s face" category. Levene’s test for homogeneity of variance indicated no significant difference in variance across gender groups. A non-parametric Wilcoxon rank sum test was used. Results showed no statistically significant difference in YOLOv8’s classification accuracy between videos with a male or female partner, *W* = 423, *p* = .07842. These findings suggest that model performance on face identification did not significantly vary by the gender of the participant in the video.
+
+### Adult vs kids partner
+
+```{r}
+dyad_accuracy <- pcat |> 
+  left_join(pcat_demo) |> 
+  filter(hand_code == 1) |> 
+  rowwise() |> 
+  mutate(accuracy = ifelse(Code == hand_code, 1, 0),
+         partner_age = ifelse(str_detect(id,"P"), 1, 0))  |> 
+  group_by(id,partner_age) %>%
+  summarise(mean_acc = mean(accuracy),
+            sd_acc = sd(accuracy),
+            n = n())
+
+t.test(mean_acc ~ partner_age, data = dyad_accuracy)
+```
+
+#### Assumptions
+
+```{r}
+## Normality
+dyad_accuracy |> 
+  group_by(partner_age) %>% 
+  summarise(
+    n = n(),
+    shapiro_p = shapiro.test(mean_acc)$p.value
+  )
+
+ggqqplot(dyad_accuracy, "mean_acc", facet.by = "partner_age")
+
+## Variance
+
+leveneTest(dyad_accuracy$mean_acc, dyad_accuracy$partner_age)
+```
+
+-   Both the shapiro test and the qqplot confirm that both samples did not pass the normality test.
+-   Groups have equal variances.
+
+**Conclusion**: a non parametric test needs to be used due to failing the normality tests
+
+#### Test
+
+```{r}
+#t.test(mean_acc ~ partner_age, data = dyad_accuracy)
+wilcox.test(mean_acc ~ partner_age, data = dyad_accuracy, exact = T)
+```
+
+To examine whether the accuracy of the YOLOv8 model differed by weather the person in the video was an adult or a child, we compared model performance on videos featuring male versus female participants. Accuracy was defined as the proportion of frames where the model's AOI label matched the human-coded label for the "partner’s face" category. Levene’s test for homogeneity of variance indicated no significant difference in variance across age groups. A non-parametric Wilcoxon rank sum test was used. Results showed no statistically significant difference in YOLOv8’s classification accuracy between videos with an adult or a child partner, *W* = 366, *p* = .2188. These findings suggest that model performance on face identification did not significantly vary by the age of the participant in the video (adult vs child).
+
+### Latinx vs Non-Latinx
+
+Here I am testing the average accuracy of yolo to agree with the human codes. I first filtered only the frames identifying partner's face by a human and then calculate accuracy of this classification by the algorithm. accuracy = average of correct classification (i.e., Code == hand_code)
+
+```{r}
+dyad_accuracy <- pcat |> 
+  left_join(pcat_demo) |> 
+  filter(hand_code == 1) |> 
+  rowwise() |> 
+  mutate(accuracy = ifelse(Code == hand_code, 1, 0),
+         latinx = ifelse(ethnicity_partner_code != 1, 1, 0)) |> 
+  group_by(id,latinx) %>%
+  summarise(mean_acc = mean(accuracy),
+            sd_acc = sd(accuracy),
+            n = n())
+
+```
+
+#### Assumptions
+
+```{r}
+## Normality
+dyad_accuracy |> 
+  group_by(latinx) %>% 
+  summarise(
+    n = n(),
+    shapiro_p = shapiro.test(mean_acc)$p.value
+  )
+
+ggqqplot(dyad_accuracy, "mean_acc", facet.by = "latinx")
+
+## Variance
+
+leveneTest(dyad_accuracy$mean_acc, dyad_accuracy$latinx)
+```
+
+-   Normality both the shapiro test and the qqplot confirm that the White sample did not pass the normality test.
+-   Groups have equal variances.
+
+**Conclusion**: Despite the groups having equal variances, the data failed to pass the normality test (specifically for the non-latinx sample) and therefore a non parametric test needs to be used
+
+#### Test
+
+```{r}
+#t_test<-t.test(mean_acc ~ non_white, data = dyad_accuracy)
+wilcox.test(mean_acc ~ latinx, data = dyad_accuracy)
+```
+
+We tested YOLOv8’s performance varied based on the race of individuals featured in the video as either Latinx versus Non-Latinx. Accuracy was calculated as the proportion of correctly labeled frames for the partner’s face AOI, based on agreement with human coding. A Wilcoxon rank sum test comparing videos featuring Latinx versus Non-Latinx participants indicated no significant difference in classification accuracy, *W* = 88, *p* = .486 These results suggest that, within the current sample, model performance on face identification did not differ by participant latinx ethnicity.
+### White vs Non-White partner
+
+Here I am testing the average accuracy of yolo to agree with the human codes. I first filtered only the frames identifying partner's face by a human and then calculate accuracy of this classification by the algorithm. accuracy = average of correct classification (i.e., Code == hand_code)
+
+```{r}
+dyad_accuracy <- pcat |> 
+  left_join(pcat_demo) |> 
+  filter(hand_code == 1) |> 
+  rowwise() |> 
+  mutate(accuracy = ifelse(Code == hand_code, 1, 0),
+         non_white = ifelse(race_partner_code != 3, 1, 0)) |> 
+  group_by(id,non_white) %>%
+  summarise(mean_acc = mean(accuracy),
+            sd_acc = sd(accuracy),
+            n = n())
+
+
+```
+
+#### Assumptions
+
+```{r}
+## Normality
+dyad_accuracy |> 
+  group_by(non_white) %>% 
+  summarise(
+    n = n(),
+    shapiro_p = shapiro.test(mean_acc)$p.value
+  )
+
+ggqqplot(dyad_accuracy, "mean_acc", facet.by = "non_white")
+
+## Variance
+
+leveneTest(dyad_accuracy$mean_acc, dyad_accuracy$non_white)
+```
+
+-   Normality both the shapiro test and the qqplot confirm that the samples did not pass the normality test.
+-   Groups have equal variances.
+
+**Conclusion**: Despite the groups having equal variances, the data failed to pass the normality test and therefore a non parametric test needs to be used
+
+#### Test
+
+```{r}
+#t.test(mean_acc ~ non_white, data = dyad_accuracy)
+wilcox.test(mean_acc ~ non_white, data = dyad_accuracy)
+```
+
+We tested YOLOv8’s performance varied based on the race of individuals featured in the video as either white vs non-white and their specific race category. Accuracy was calculated as the proportion of correctly labeled frames for the partner’s face AOI, based on agreement with human coding. A Wilcoxon rank sum test comparing videos featuring White versus Non-White participants indicated no significant difference in classification accuracy, *W* = 419, *p* = .6543. These results suggest that, within the current sample, model performance on face identification did not differ by participant race.
+
+#### Across the 3 races:
+
+```{r}
+dyad_accuracy <- pcat |> 
+  left_join(pcat_demo) |> 
+  filter(hand_code == 1) |> 
+  rowwise() |> 
+  mutate(accuracy = ifelse(Code == hand_code, 1, 0)) |> 
+  group_by(id,race_partner_code) %>%
+  summarise(mean_acc = mean(accuracy),
+            sd_acc = sd(accuracy),
+            n = n())
+
+anova_model <- aov(mean_acc ~ race_partner_code, data = dyad_accuracy)
+```
+
+#### Assumptions
+
+```{r}
+## Normality
+### Per group
+dyad_accuracy |> 
+  group_by(race_partner_code) %>% 
+  summarise(
+    n = n(),
+    shapiro_p = shapiro.test(mean_acc)$p.value
+  )
+ggqqplot(dyad_accuracy, "mean_acc", facet.by = "race_partner_code")
+
+### residuals [preferred]
+qqPlot(anova_model$residuals,
+  id = FALSE # id = FALSE to remove point identification
+)
+
+
+## Variance
+
+leveneTest(dyad_accuracy$mean_acc, dyad_accuracy$race_partner_code)
+```
+
+-   Normality both the shapiro test and the qqplot confirm that the White sample did not pass the normality test even when residuals are analyzed
+-   Groups have equal variances.
+
+**Conclusion**: A non-parametric test can be used for this analysis
+
+#### Test
+
+```{r}
+#report(anova_model)
+kruskal.test(mean_acc ~ race_partner_code, data = dyad_accuracy)
+```
+
+A Kruskal-Wallis rank sum test revealed no significant differences in mean model accuracy across the three racial groups of the female partner—White, Asian, Black/African American, and multiracial, *X*²(3) = 7.40, p = .06. Together, these results suggest that, within the current sample, the YOLOv8 model performed comparably across videos featuring participants from different racial backgrounds.
+
+## Id Partners (face+body):
+
+### Males vs Female partner
+
+Here I am testing the average accuracy of yolo to agree with the human codes. I first filtered only the frames identifying partner's face by a human and then calculate accuracy of this classification by the algorithm. accuracy = average of correct classification (i.e., Code == hand_code)
+
+```{r}
+dyad_accuracy <- pcat |> 
+  left_join(pcat_demo) |> 
+  filter(hand_code == 1 | hand_code == 0 ) |> 
+  rowwise() |> 
+  mutate(accuracy = ifelse(Code == hand_code, 1, 0)) |> 
+  group_by(id,female_partner) %>%
+  summarise(mean_acc = mean(accuracy),
+            sd_acc = sd(accuracy),
+            n = n())
+```
+
+#### Assumptions
+
+```{r}
+## Normality
+dyad_accuracy |> 
+  group_by(female_partner) %>% 
+  summarise(
+    n = n(),
+    shapiro_p = shapiro.test(mean_acc)$p.value
+  )
+
+ggqqplot(dyad_accuracy, "mean_acc", facet.by = "female_partner")
+
+## Variance
+
+leveneTest(dyad_accuracy$mean_acc, dyad_accuracy$female_partner)
+```
+
+-   Despite shaphiro indicating that one of the samples doesnot have normal distribution, the qqplot does not warrant the use of a non-parametric solely on this assumption.
+-   Groups failed to have equal variances.
+
+**Conclusion**: a non parametric test needs to be used
+
+#### Test
+
+```{r}
+#t.test(mean_acc ~ female_partner, data = dyad_accuracy)
+wilcox.test(mean_acc ~ female_partner, data = dyad_accuracy)
+```
+
+To examine whether the accuracy of the YOLOv8 model differed by the gender composition of the dyad, we compared model performance on videos featuring male versus female participants. Accuracy was defined as the proportion of frames where the model's AOI label matched the human-coded label for the "partner’s face and body" categories. Levene test indicated that the two groups do not have equal variances. Therefore, a non-parametric Wilcoxon rank sum test was used. Results showed no statistically significant difference in YOLOv8’s classification accuracy between videos with male and female subjects on the video, *W* = 512 *p* = .3023. These findings suggest that model performance on face identification did not significantly vary by the the gender of the person in the video.
+
+#### Adult vs Children
+
+```{r}
+dyad_accuracy <- pcat |> 
+  left_join(pcat_demo) |> 
+  filter(hand_code == 1 | hand_code == 0 ) |> 
+  rowwise() |> 
+  mutate(accuracy = ifelse(Code == hand_code, 1, 0),
+         partner_age = ifelse(str_detect(id,"P"), 1, 0)) |> 
+  group_by(id,partner_age) %>%
+  summarise(mean_acc = mean(accuracy),
+            sd_acc = sd(accuracy),
+            n = n())
+
+#anova_model <- aov(mean_acc ~ partner_age*female_partner, data = dyad_accuracy)
+#summary(anova_model)
+```
+
+#### Assumptions
+
+```{r}
+## Normality
+dyad_accuracy |> 
+  group_by(partner_age) %>% 
+  summarise(
+    n = n(),
+    shapiro_p = shapiro.test(mean_acc)$p.value
+  )
+
+ggqqplot(dyad_accuracy, "mean_acc", facet.by = "partner_age")
+
+## Variance
+
+leveneTest(dyad_accuracy$mean_acc, dyad_accuracy$partner_age)
+```
+
+-   Shapiro test suggested that both sample did not have normal distributions but qqplots did not raise concerns
+-   Groups have equal variances.
+
+**Conclusion**: a parametric test can be used
+
+#### Test
+
+```{r}
+report(t.test(mean_acc ~ partner_age, data = dyad_accuracy))
+```
+
+To examine whether the accuracy of the YOLOv8 model differed by the gender composition of the dyad, we compared model performance on videos featuring male versus female participants. Accuracy was defined as the proportion of frames where the model's AOI label matched the human-coded label for the "partner’s face and body" categories. Results showed no statistically significant difference in YOLOv8’s classification accuracy between videos with adult and children subjects on the video, *t*(55.51) = -0.28, *p* = 0.781. These findings suggest that model performance on subject identification did not significantly vary by the the age of the person in the video (Adult vs Child).

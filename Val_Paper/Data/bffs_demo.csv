@@ -1,0 +1,21 @@
+id,dyad,subject,woman_dyad,race_self_code,ethnicity_self_code,race_partner_code,ethnicity_partner_code,gender_dyad,race_self,ethnicity_self,ethnicity_self_other,race_partner,ethnicity_partner,ethnicity_partner_other,hand_proc_time,reliability,reliability_proc_time,age
+2337_02_03,2,3,0,3,1,3,0,Man,White,"Hispanic/Latino/Latina/Latinx, Non-Hispanic",,White,Non-Hispanic,,12.86,0,,18.39
+2337_02_04,2,4,0,3,0,3,1,Man,White,Non-Hispanic,,White,"Hispanic/Latino/Latina/Latinx, Non-Hispanic",,10.03,0,,18.57
+2337_04_07,4,7,1,3,0,3,1,Woman,White,Non-Hispanic,,White,Hispanic/Latino/Latina/Latinx,,9.47,0,,20.02
+2337_04_08,4,8,1,3,1,3,0,Woman,White,Hispanic/Latino/Latina/Latinx,,White,Non-Hispanic,,16.4,0,,19.86
+2337_06_11,6,11,0,1,0,1,0,Man,Asian,Non-Hispanic,,Asian,Non-Hispanic,,14.34,0,,21.14
+2337_06_12,6,12,0,1,0,1,0,Man,Asian,Non-Hispanic,,Asian,Non-Hispanic,,12.67,0,,21.29
+2337_07_13,7,13,0,1,0,3,0,Man,Asian,Non-Hispanic,,White,Non-Hispanic,,16.29,0,,20.95
+2337_07_14,7,14,0,3,0,1,0,Man,White,Non-Hispanic,,Asian,Non-Hispanic,,12.27,1,18.57,21.57
+2337_10_19,10,19,0,3,0,2,1,Man,White,Non-Hispanic,,Black,Hispanic/Latino/Latina/Latinx,,11.83,0,,20.09
+2337_10_20,10,20,0,2,1,3,0,Man,Black,Hispanic/Latino/Latina/Latinx,,White,Non-Hispanic,,11.8,1,16.15,20.2
+2337_14_27,14,27,1,3,2,3,1,Woman,White,Another ethnicity,Cypriot,White,Hispanic/Latino/Latina/Latinx,,14.54,0,,19.18
+2337_14_28,14,28,1,3,1,3,2,Woman,White,Hispanic/Latino/Latina/Latinx,,White,Another ethnicity,Cypriot,11.89,0,,18.68
+2337_22_43,22,43,1,2,0,1,0,Woman,Black,Non-Hispanic,,Asian,Non-Hispanic,,,0,,19.38
+2337_22_44,22,44,1,1,0,2,0,Woman,Asian,Non-Hispanic,,Black,Non-Hispanic,,22.73,0,,20.28
+2337_28_55,28,55,0,3,1,3,2,Man,White,Hispanic/Latino/Latina/Latinx,,White,Another ethnicity,Arab / Middle Eastern,11.3,1,20,18.75
+2337_28_56,28,56,0,3,2,3,1,Man,White,Another ethnicity,Arab / Middle Eastern,White,Hispanic/Latino/Latina/Latinx,,15.16,0,,18.81
+2337_31_61,31,61,1,2,2,2,0,Woman,Black,Another ethnicity,Jamaican/Cameroonian,Black,Non-Hispanic,,11.65,1,30,18.64
+2337_31_62,31,62,1,2,0,2,2,Woman,Black,Non-Hispanic,,Black,Another ethnicity,Jamaican/Cameroonian,15.11,0,,19.54
+2337_34_67,34,67,1,3,0,1,0,Woman,White,Non-Hispanic,,Asian,Non-Hispanic,,15.35,0,,22.88
+2337_34_68,34,68,1,1,0,3,0,Woman,Asian,Non-Hispanic,,White,Non-Hispanic,,12.03,0,,22.48
