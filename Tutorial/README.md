@@ -1,5 +1,5 @@
 # /Tutorial
-# I uploaded my jupyter file for pcat_v8. I split the functions up into cells. I also figured out how to display images and get user input for the tutorial,
-# but to do the rest I need to wait for the sample data. 
-# I still need to figure out how to display the first/an arbitrary frame from the video to the user for the tutorial. 
-# - Jed
+
+Example tutorial for yolov8 object detection on mobile eye-tracking data is provided in a jupyter notebook in Tutorial_Jupyter_Notebook.ipynb
+
+We recommend that you open this file in google colab to test the code with the sample data files. A simple way to do this is go to: https://colab.research.google.com/. Then select File/Open notebook. Select the GitHub tab and then select add the url: https://github.com/lytlemn/YOLOv8-for-Mobile-Eye-Tracking-Across-Contexts/blob/main/Tutorial/Tutorial_Jupyter_Notebook.ipynb
